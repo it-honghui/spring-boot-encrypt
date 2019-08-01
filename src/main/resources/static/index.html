@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>数据传输加解密示例</title>
+</head>
+<script type="text/javascript" src="js/aes.js"></script>
+<script type="text/javascript" src="js/crypto-js.js"></script>
+<script type="text/javascript" src="js/pad-zeropadding.js"></script>
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+<body>
+<input type="button" value="get请求->一个或多个参数使用工具类解密" onclick="getStrData()"/>
+<input type="button" value="post请求->一个或多个参数使用工具类解密" onclick="postStrData()"/>
+<input type="button" value="post请求->一个参数使用@Decrypt注解解密" onclick="postStrData2()"/>
+<input type="button" value="post请求->多个参数使用@Decrypt注解解密" onclick="postStrData3()"/>
+<input type="button" value="post请求->发送并获取实体类数据" onclick="encryptDto()"/>
+<input type="button" value="post请求->发送并获取map数据" onclick="encryptMap()"/>
+<script>
+
+    /**
+     * get请求->一个或多个参数使用工具类解密
+     */
+    function getStrData() {
+        $.ajax({
+            type: "GET",
+            url: "/getStrData",
+            data: {
+                username: Encrypt("wanghonghui"),
+                password: Encrypt(123456)
+            },
+            dataType: 'text',
+            success: function (resData) {
+                alert(resData);
+                alert(Decrypt(resData));
+            }
+        });
+    }
+
+    /**
+     * post请求->多个参数使用@Decrypt注解解密
+     */
+    function postStrData() {
+        $.ajax({
+            type: "POST",
+            url: "/postStrData",
+            data: {
+                username: Encrypt("wanghonghui"),
+                password: Encrypt(123456)
+            },
+            dataType: 'text',
+            success: function (resData) {
+                alert(resData);
+                alert(Decrypt(resData));
+            }
+        });
+    }
+
+    /**
+     * post请求->一个参数使用@Decrypt注解解密
+     */
+    function postStrData2() {
+        $.ajax({
+            type: "POST",
+            url: "/postStrData2",
+            data: Encrypt("wanghonghui"),
+            dataType: 'text',
+            contentType: "application/json",
+            success: function (resData) {
+                alert(resData);
+                alert(Decrypt(resData));
+            }
+        });
+    }
+
+    /**
+     * post请求->多个参数使用@Decrypt注解解密
+     */
+    function postStrData3() {
+        $.ajax({
+            type: "POST",
+            url: "/postStrData3",
+            data: Encrypt(JSON.stringify({username: "wanghonghui", password: 123456})),
+            dataType: 'text',
+            contentType: "application/json",
+            success: function (resData) {
+                alert(resData);
+                alert(Decrypt(resData));
+            }
+        });
+    }
+
+    /**
+     * post请求->发送并获取实体类数据
+     */
+    function encryptDto() {
+        alert("发送的数据：" + Encrypt(JSON.stringify({id: 1, name: "王弘辉"})));
+        $.ajax({
+            type: "POST",
+            url: "/encryptDto",
+            data: Encrypt(JSON.stringify({id: 1, name: "王弘辉"})),
+            dataType: 'text',
+            contentType: "application/json",
+            success: function (resData) {
+                alert("返回的数据：" + resData);
+                alert("解密之后：" + Decrypt(resData));
+                alert("解密之后转json对象：" + JSON.parse(Decrypt(resData)).name);
+            }
+        });
+    }
+
+    /**
+     * post请求->发送并获取map数据
+     */
+    function encryptMap() {
+        var map = {};
+        map["username"] = "wanghonghui";
+        map["password"] = 123456;
+
+        $.ajax({
+            type: "POST",
+            url: "/encryptMap",
+            data: Encrypt(JSON.stringify(map)),
+            dataType: 'text',
+            contentType: "application/json",
+            success: function (resData) {
+                alert(resData);
+                alert(Decrypt(resData));
+            }
+        });
+    }
+
+
+    var key = CryptoJS.enc.Utf8.parse("abcdef0123456780");
+
+    function Encrypt(word) {
+        var srcs = CryptoJS.enc.Utf8.parse(word);
+        var encrypted = CryptoJS.AES.encrypt(srcs, key, {
+            mode: CryptoJS.mode.ECB,
+            padding: CryptoJS.pad.Pkcs7
+        });
+        return encrypted.toString();
+    }
+
+    function Decrypt(word) {
+        var decrypt = CryptoJS.AES.decrypt(word, key, {
+            mode: CryptoJS.mode.ECB,
+            padding: CryptoJS.pad.Pkcs7
+        });
+        return CryptoJS.enc.Utf8.stringify(decrypt).toString();
+    }
+
+</script>
+</body>
+
+</html>
